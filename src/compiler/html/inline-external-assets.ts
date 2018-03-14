@@ -1,8 +1,8 @@
-import { CompilerCtx, Config, HydrateResults, OutputTarget, Url } from '../../declarations';
+import * as d from '../../declarations';
 import { pathJoin } from '../util';
 
 
-export async function inlineExternalAssets(config: Config, compilerCtx: CompilerCtx, outputTarget: OutputTarget, results: HydrateResults, doc: Document) {
+export async function inlineExternalAssets(config: d.Config, compilerCtx: d.CompilerCtx, outputTarget: d.OutputTargetHydrate, results: d.HydrateResults, doc: Document) {
   const linkElements = doc.querySelectorAll('link[href][rel="stylesheet"]') as any;
   for (var i = 0; i < linkElements.length; i++) {
     inlineStyle(config, compilerCtx, outputTarget, results, doc, linkElements[i] as any);
@@ -15,7 +15,7 @@ export async function inlineExternalAssets(config: Config, compilerCtx: Compiler
 }
 
 
-async function inlineStyle(config: Config, compilerCtx: CompilerCtx, outputTarget: OutputTarget, results: HydrateResults, doc: Document, linkElm: HTMLLinkElement) {
+async function inlineStyle(config: d.Config, compilerCtx: d.CompilerCtx, outputTarget: d.OutputTargetHydrate, results: d.HydrateResults, doc: Document, linkElm: HTMLLinkElement) {
   const content = await getAssetContent(config, compilerCtx, outputTarget, results, linkElm.href);
   if (!content) {
     return;
@@ -31,7 +31,7 @@ async function inlineStyle(config: Config, compilerCtx: CompilerCtx, outputTarge
 }
 
 
-async function inlineScript(config: Config, compilerCtx: CompilerCtx, outputTarget: OutputTarget, results: HydrateResults, scriptElm: HTMLScriptElement) {
+async function inlineScript(config: d.Config, compilerCtx: d.CompilerCtx, outputTarget: d.OutputTargetHydrate, results: d.HydrateResults, scriptElm: HTMLScriptElement) {
   const content = await getAssetContent(config, compilerCtx, outputTarget, results, scriptElm.src);
   if (!content) {
     return;
@@ -44,7 +44,7 @@ async function inlineScript(config: Config, compilerCtx: CompilerCtx, outputTarg
 }
 
 
-async function getAssetContent(config: Config, ctx: CompilerCtx, outputTarget: OutputTarget, results: HydrateResults, assetUrl: string) {
+async function getAssetContent(config: d.Config, ctx: d.CompilerCtx, outputTarget: d.OutputTargetHydrate, results: d.HydrateResults, assetUrl: string) {
   // figure out the url's so we can check the hostnames
   const fromUrl = config.sys.url.parse(results.url);
   const toUrl = config.sys.url.parse(assetUrl);
@@ -65,7 +65,7 @@ async function getAssetContent(config: Config, ctx: CompilerCtx, outputTarget: O
     // rough estimate of size
     const fileSize = content.length;
 
-    if (fileSize > results.opts.inlineAssetsMaxSize) {
+    if (fileSize > outputTarget.inlineAssetsMaxSize) {
       // welp, considered too big, don't inline
       return null;
     }
@@ -79,7 +79,7 @@ async function getAssetContent(config: Config, ctx: CompilerCtx, outputTarget: O
 }
 
 
-export function getFilePathFromUrl(config: Config, outputTarget: OutputTarget, fromUrl: Url, toUrl: Url) {
+export function getFilePathFromUrl(config: d.Config, outputTarget: d.OutputTargetHydrate, fromUrl: d.Url, toUrl: d.Url) {
   const resolvedUrl = '.' + config.sys.url.resolve(fromUrl.pathname, toUrl.pathname);
   return pathJoin(config, outputTarget.dir, resolvedUrl);
 }

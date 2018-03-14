@@ -1,89 +1,93 @@
-import { Config, OutputTarget, PrerenderConfig, RenderOptions } from '../../declarations';
-import { normalizePath } from '../util';
+import * as d from '../../declarations';
+import { setArrayConfig, setBooleanConfig, setNumberConfig } from './config-utils';
 
 
-export function validatePrerender(config: Config, outputTarget: OutputTarget) {
-  if (outputTarget.type !== 'www') {
-    outputTarget.prerender = null;
-    return;
-  }
+export function validatePrerender(config: d.Config, outputTarget: d.OutputTargetWww) {
+  let defaults: d.OutputTargetWww;
 
-  if (outputTarget.prerender === false) {
-    outputTarget.prerender = null;
-    return;
-  }
-
-  if (config.flags.prerender) {
-    outputTarget.prerender = outputTarget.prerender || {};
-  }
-
-  if (outputTarget.prerender) {
-    // we already have a prerender config
-    outputTarget.prerender = Object.assign({}, DEFAULT_SSR_CONFIG, DEFAULT_PRERENDER_CONFIG, outputTarget.prerender);
-
-    if (typeof outputTarget.prerender.hydrateComponents !== 'boolean') {
-      outputTarget.prerender.hydrateComponents = true;
-    }
-
-    if (!outputTarget.prerender.prerenderDir) {
-      outputTarget.prerender.prerenderDir = outputTarget.dir;
-    }
-
-    if (!config.sys.path.isAbsolute(outputTarget.prerender.prerenderDir)) {
-      outputTarget.prerender.prerenderDir = normalizePath(config.sys.path.join(config.rootDir, outputTarget.prerender.prerenderDir));
-    }
-
-    config.buildEs5 = true;
-
-  } else if (outputTarget.prerender !== null && !config.devMode) {
-    // don't have a prerender config
-    // and it's prod mode
-    outputTarget.prerender = {
-      hydrateComponents: false,
-      crawl: false,
-      include: [
-        { path: '/' }
-      ],
-      collapseWhitespace: DEFAULT_SSR_CONFIG.collapseWhitespace,
-      inlineLoaderScript:  DEFAULT_SSR_CONFIG.inlineLoaderScript,
-      inlineStyles: false,
-      inlineAssetsMaxSize: DEFAULT_SSR_CONFIG.inlineAssetsMaxSize,
-      includePathQuery: DEFAULT_PRERENDER_CONFIG.includePathQuery,
-      includePathHash: DEFAULT_PRERENDER_CONFIG.includePathHash,
-      maxConcurrent: DEFAULT_PRERENDER_CONFIG.maxConcurrent,
-      removeUnusedStyles: false
-    };
-
-    if (!outputTarget.prerender.prerenderDir) {
-      outputTarget.prerender.prerenderDir = outputTarget.dir;
-    }
-
-    if (!config.sys.path.isAbsolute(outputTarget.prerender.prerenderDir)) {
-      outputTarget.prerender.prerenderDir = normalizePath(config.sys.path.join(config.rootDir, outputTarget.prerender.prerenderDir));
-    }
+  if (config.flags && config.flags.prerender) {
+    // forcing a prerender build
+    defaults = FULL_PRERENDER_DEFAULTS;
 
   } else {
-    outputTarget.prerender = null;
+    // not forcing a prerender build
+
+    if (config.devMode) {
+      // not forcing a prerender build
+      // but we're in dev mode
+      defaults = DEV_MODE_DEFAULTS;
+
+    } else {
+      // not forcing a prerender build
+      // but we're in prod mode
+      defaults = PROD_NON_HYDRATE_DEFAULTS;
+    }
+  }
+
+  setBooleanConfig(outputTarget, 'canonicalLink', null, defaults.canonicalLink);
+  setBooleanConfig(outputTarget, 'collapseWhitespace', null, defaults.collapseWhitespace);
+  setBooleanConfig(outputTarget, 'hydrateComponents', null, defaults.hydrateComponents);
+  setBooleanConfig(outputTarget, 'inlineStyles', null, defaults.inlineStyles);
+  setBooleanConfig(outputTarget, 'inlineLoaderScript', null, defaults.inlineLoaderScript);
+  setNumberConfig(outputTarget, 'inlineAssetsMaxSize', null, defaults.inlineAssetsMaxSize);
+  setBooleanConfig(outputTarget, 'prerenderUrlCrawl', null, defaults.prerenderUrlCrawl);
+  setArrayConfig(outputTarget, 'prerenderLocations', defaults.prerenderLocations);
+  setBooleanConfig(outputTarget, 'prerenderPathHash', null, defaults.prerenderPathHash);
+  setBooleanConfig(outputTarget, 'prerenderPathQuery', null, defaults.prerenderPathQuery);
+  setNumberConfig(outputTarget, 'prerenderMaxConcurrent', null, defaults.prerenderMaxConcurrent);
+  setBooleanConfig(outputTarget, 'removeUnusedStyles', null, defaults.removeUnusedStyles);
+
+  if (outputTarget.hydrateComponents) {
+    config.buildEs5 = true;
   }
 }
 
-export const DEFAULT_PRERENDER_CONFIG: PrerenderConfig = {
-  crawl: true,
-  include: [
+
+const FULL_PRERENDER_DEFAULTS: d.OutputTargetWww = {
+  canonicalLink: true,
+  collapseWhitespace: true,
+  hydrateComponents: true,
+  inlineStyles: true,
+  inlineLoaderScript: true,
+  inlineAssetsMaxSize: 5000,
+  prerenderUrlCrawl: true,
+  prerenderLocations: [
     { path: '/' }
   ],
-  includePathQuery: false,
-  includePathHash: false,
-  maxConcurrent: 4,
-  hydrateComponents: true
-};
-
-export const DEFAULT_SSR_CONFIG: RenderOptions = {
-  collapseWhitespace: true,
-  inlineLoaderScript: true,
-  inlineStyles: true,
-  inlineAssetsMaxSize: 5000,
+  prerenderPathHash: false,
+  prerenderPathQuery: false,
+  prerenderMaxConcurrent: 4,
   removeUnusedStyles: true
 };
 
-export const DEFAULT_PRERENDER_HOST = 'prerender.stenciljs.com';
+
+const PROD_NON_HYDRATE_DEFAULTS: d.OutputTargetWww = {
+  canonicalLink: false,
+  collapseWhitespace: true,
+  hydrateComponents: false,
+  inlineStyles: false,
+  inlineLoaderScript: true,
+  inlineAssetsMaxSize: 0,
+  prerenderUrlCrawl: false,
+  prerenderLocations: [],
+  prerenderPathHash: false,
+  prerenderPathQuery: false,
+  prerenderMaxConcurrent: 0,
+  removeUnusedStyles: false
+};
+
+
+const DEV_MODE_DEFAULTS: d.OutputTargetWww = {
+  canonicalLink: false,
+  collapseWhitespace: false,
+  hydrateComponents: false,
+  inlineStyles: false,
+  inlineLoaderScript: false,
+  inlineAssetsMaxSize: 0,
+  prerenderUrlCrawl: false,
+  prerenderLocations: [],
+  prerenderPathHash: false,
+  prerenderPathQuery: false,
+  prerenderMaxConcurrent: 0,
+  removeUnusedStyles: false
+};

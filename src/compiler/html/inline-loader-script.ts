@@ -1,9 +1,9 @@
-import { CompilerCtx, Config, HydrateResults, OutputTarget } from '../../declarations';
+import * as d from '../../declarations';
 import { getLoaderFileName, getLoaderPath } from '../app/app-file-naming';
 import { normalizePath } from '../util';
 
 
-export async function inlineLoaderScript(config: Config, compilerCtx: CompilerCtx, outputTarget: OutputTarget, doc: Document, results: HydrateResults) {
+export async function inlineLoaderScript(config: d.Config, compilerCtx: d.CompilerCtx, outputTarget: d.OutputTargetHydrate, doc: Document, results: d.HydrateResults) {
   // create the script url we'll be looking for
   const loaderFileName = getLoaderFileName(config);
 
@@ -62,7 +62,7 @@ export function isLoaderScriptSrc(loaderFileName: string, scriptSrc: string) {
 }
 
 
-async function updateInlineLoaderScriptElement(config: Config, compilerCtx: CompilerCtx, outputTarget: OutputTarget, doc: Document, results: HydrateResults, scriptElm: HTMLScriptElement) {
+async function updateInlineLoaderScriptElement(config: d.Config, compilerCtx: d.CompilerCtx, outputTarget: d.OutputTargetHydrate, doc: Document, results: d.HydrateResults, scriptElm: HTMLScriptElement) {
   // get the file path
   const appLoaderPath = getLoaderPath(config, outputTarget);
 
@@ -110,7 +110,7 @@ async function updateInlineLoaderScriptElement(config: Config, compilerCtx: Comp
   // inline the js content
   scriptElm.innerHTML = content;
 
-  if (results.opts.hydrateComponents) {
+  if (outputTarget.hydrateComponents) {
     // remove the script element from where it's currently at in the dom
     scriptElm.parentNode.removeChild(scriptElm);
 

@@ -9,7 +9,7 @@ export interface StencilSystem {
     runtime?: string;
   };
   createDom?(): {
-    parse(hydrateOptions: d.HydrateOptions): Window;
+    parse(hydrateOptions: d.OutputTargetHydrate): Window;
     serialize(): string;
     destroy(): void;
   };

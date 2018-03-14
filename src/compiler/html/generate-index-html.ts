@@ -1,16 +1,18 @@
-import { BuildCtx, CompilerCtx, Config, OutputTarget } from '../../declarations';
+import * as d from '../../declarations';
 import { catchError, hasError } from '../util';
-import { injectRegisterServiceWorker, injectUnregisterServiceWorker } from '../service-worker/inject-sw-script';
+import { updateIndexHtmlServiceWorker } from '../service-worker/inject-sw-script';
 
 
-export function generateIndexHtmls(config: Config, compilerCtx: CompilerCtx, buildCtx: BuildCtx) {
-  return Promise.all(config.outputTargets.map(outputTarget => {
+export function generateIndexHtmls(config: d.Config, compilerCtx: d.CompilerCtx, buildCtx: d.BuildCtx) {
+  const indexHtmlOutputs = (config.outputTargets as d.OutputTargetWww[]).filter(o => o.indexHtml);
+
+  return Promise.all(indexHtmlOutputs.map(outputTarget => {
     return generateIndexHtml(config, compilerCtx, buildCtx, outputTarget);
   }));
 }
 
 
-export async function generateIndexHtml(config: Config, compilerCtx: CompilerCtx, buildCtx: BuildCtx, outputTarget: OutputTarget) {
+export async function generateIndexHtml(config: d.Config, compilerCtx: d.CompilerCtx, buildCtx: d.BuildCtx, outputTarget: d.OutputTargetWww) {
   if (hasError(buildCtx.diagnostics)) {
     return;
   }
@@ -29,7 +31,7 @@ export async function generateIndexHtml(config: Config, compilerCtx: CompilerCtx
     const indexSrcHtml = await compilerCtx.fs.readFile(config.srcIndexHtml);
 
     try {
-      await setIndexHtmlContent(config, compilerCtx, outputTarget, indexSrcHtml);
+      await indexHtmlServiceWorkerUpdate(config, compilerCtx, outputTarget, indexSrcHtml);
 
     } catch (e) {
       catchError(buildCtx.diagnostics, e);
@@ -42,16 +44,8 @@ export async function generateIndexHtml(config: Config, compilerCtx: CompilerCtx
 }
 
 
-async function setIndexHtmlContent(config: Config, compilerCtx: CompilerCtx, outputTarget: OutputTarget, indexHtml: string) {
-  if (!outputTarget.serviceWorker && config.devMode) {
-    // if we're not generating a sw, and this is a dev build
-    // then let's inject a script that always unregisters any service workers
-    indexHtml = injectUnregisterServiceWorker(indexHtml);
-
-  } else if (outputTarget.serviceWorker) {
-    // we have a valid sw config, so we'll need to inject the register sw script
-    indexHtml = await injectRegisterServiceWorker(config, outputTarget, indexHtml);
-  }
+export async function indexHtmlServiceWorkerUpdate(config: d.Config, compilerCtx: d.CompilerCtx, outputTarget: d.OutputTargetWww, indexHtml: string) {
+  indexHtml = await updateIndexHtmlServiceWorker(config, outputTarget, indexHtml);
 
   // add the prerendered html to our list of files to write
   await compilerCtx.fs.writeFile(outputTarget.indexHtml, indexHtml);

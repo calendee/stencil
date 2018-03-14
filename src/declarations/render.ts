@@ -16,17 +16,6 @@ export interface RenderOptions {
 }
 
 
-export interface PrerenderConfig extends RenderOptions {
-  crawl?: boolean;
-  include?: PrerenderLocation[];
-  prerenderDir?: string;
-  maxConcurrent?: number;
-  includePathHash?: boolean;
-  includePathQuery?: boolean;
-  hydrateComponents?: boolean;
-}
-
-
 export interface PrerenderLocation {
   url?: string;
   path?: string;
@@ -53,7 +42,6 @@ export interface HydrateResults {
   styleUrls?: string[];
   scriptUrls?: string[];
   imgUrls?: string[];
-  opts?: HydrateOptions;
 }
 
 
@@ -91,6 +79,7 @@ export interface HydrateOptions extends RenderOptions {
     [level: string]: (...msgs: string[]) => void;
   };
   hydrateComponents?: boolean;
+  wwwDir?: string;
 }
 
 

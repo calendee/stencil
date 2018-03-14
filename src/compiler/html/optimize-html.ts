@@ -1,5 +1,5 @@
+import * as d from '../../declarations';
 import { assetVersioning } from './asset-versioning';
-import { CompilerCtx, Config, HydrateOptions, HydrateResults, OutputTarget } from '../../declarations';
 import { collapseHtmlWhitepace } from './collapse-html-whitespace';
 import { inlineComponentStyles } from '../style/inline-styles';
 import { inlineExternalAssets } from './inline-external-assets';
@@ -9,14 +9,14 @@ import { minifyInlineScripts } from './minify-inline-scripts';
 import { minifyInlineStyles } from '../style/minify-inline-styles';
 
 
-export async function optimizeHtml(config: Config, compilerCtx: CompilerCtx, outputTarget: OutputTarget, doc: Document, styles: string[], opts: HydrateOptions, results: HydrateResults) {
+export async function optimizeHtml(config: d.Config, compilerCtx: d.CompilerCtx, outputTarget: d.OutputTargetHydrate, doc: Document, styles: string[], results: d.HydrateResults) {
   const promises: Promise<any>[] = [];
 
-  if (opts.hydrateComponents !== false) {
+  if (outputTarget.hydrateComponents !== false) {
     doc.documentElement.setAttribute('data-ssr', '');
   }
 
-  if (opts.canonicalLink !== false) {
+  if (outputTarget.canonicalLink !== false) {
     try {
       insertCanonicalLink(config, doc, results);
 
@@ -30,9 +30,9 @@ export async function optimizeHtml(config: Config, compilerCtx: CompilerCtx, out
     }
   }
 
-  if (opts.inlineStyles !== false) {
+  if (outputTarget.inlineStyles) {
     try {
-      inlineComponentStyles(config, doc, styles, results, results.diagnostics);
+      inlineComponentStyles(config, outputTarget, doc, styles, results.diagnostics);
 
     } catch (e) {
       results.diagnostics.push({
@@ -44,17 +44,17 @@ export async function optimizeHtml(config: Config, compilerCtx: CompilerCtx, out
     }
   }
 
-  if (opts.inlineLoaderScript !== false) {
+  if (outputTarget.inlineLoaderScript) {
     // remove the script to the external loader script request
     // inline the loader script at the bottom of the html
     promises.push(inlineLoaderScript(config, compilerCtx, outputTarget, doc, results));
   }
 
-  if (opts.inlineAssetsMaxSize > 0) {
+  if (outputTarget.inlineAssetsMaxSize > 0) {
     promises.push(inlineExternalAssets(config, compilerCtx, outputTarget, results, doc));
   }
 
-  if (opts.collapseWhitespace !== false && !config.devMode && config.logLevel !== 'debug') {
+  if (outputTarget.collapseWhitespace && !config.devMode && config.logLevel !== 'debug') {
     // collapseWhitespace is the default
     try {
       config.logger.debug(`optimize ${results.pathname}, collapse html whitespace`);
