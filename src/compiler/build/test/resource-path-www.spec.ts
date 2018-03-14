@@ -49,10 +49,10 @@ describe('www loader/core resourcePath', () => {
     config.outputTargets = [{
       type: 'www',
       resourcePath: '/some/resource/config/path'
-    }];
+    } as d.OutputTargetWww];
 
     c = new TestingCompiler(config);
-    const wwwOutput = config.outputTargets.find(o => o.type === 'www');
+    const wwwOutput: d.OutputTargetWww = config.outputTargets.find(o => o.type === 'www');
     expect(wwwOutput.resourcePath).toBe('/some/resource/config/path/');
 
     await setupFs(c, '<script src="build/app.js"></script>');
@@ -85,7 +85,7 @@ describe('www loader/core resourcePath', () => {
     config.rootDir = '/User/testing/';
 
     c = new TestingCompiler(config);
-    const wwwOutput = config.outputTargets.find(o => o.type === 'www');
+    const wwwOutput: d.OutputTargetWww = config.outputTargets.find(o => o.type === 'www');
     expect(wwwOutput.resourcePath).toBeUndefined();
 
     await setupFs(c, '<script src="build/app.js" data-resource-path="/some/resource/attr/path/"></script>');
@@ -123,11 +123,11 @@ describe('www loader/core resourcePath', () => {
     config.hashFileNames = false;
     config.rootDir = '/User/testing/';
     config.outputTargets = [
-      { type: 'www', serviceWorker: null }
+      { type: 'www', serviceWorker: null } as d.OutputTargetWww
     ];
 
     c = new TestingCompiler(config);
-    const wwwOutput = config.outputTargets.find(o => o.type === 'www');
+    const wwwOutput: d.OutputTargetWww = config.outputTargets.find(o => o.type === 'www');
     expect(wwwOutput.resourcePath).toBeUndefined();
 
     await setupFs(c, '<script src="build/app.js" test-inlined></script>');
@@ -169,14 +169,12 @@ describe('www loader/core resourcePath', () => {
         type: 'www',
         resourcePath: '/some/resource/config/path',
         serviceWorker: null,
-        prerender: {
-          hydrateComponents: false
-        }
-      }
+        hydrateComponents: false
+      } as d.OutputTargetWww
     ];
 
     c = new TestingCompiler(config);
-    const wwwOutput = config.outputTargets.find(o => o.type === 'www');
+    const wwwOutput: d.OutputTargetWww = config.outputTargets.find(o => o.type === 'www');
     expect(wwwOutput.resourcePath).toEqual('/some/resource/config/path/');
 
     await setupFs(c, '<script src="build/app.js" test-inlined></script>');

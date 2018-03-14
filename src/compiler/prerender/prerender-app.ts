@@ -118,7 +118,7 @@ async function runNextPrerenderUrl(config: d.Config, compilerCtx: d.CompilerCtx,
     // merge any diagnostics we just got from this
     config.logger.printDiagnostics(results.diagnostics);
 
-    if (outputTarget.prerenderUrlCrawl !== false) {
+    if (outputTarget.prerenderUrlCrawl) {
       crawlAnchorsForNextUrls(config, outputTarget, prerenderQueue, results);
     }
 

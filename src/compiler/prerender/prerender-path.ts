@@ -16,7 +16,7 @@ export async function prerenderPath(config: d.Config, compilerCtx: d.CompilerCtx
     const rendererConfig = Object.assign({}, config);
 
     // create the hydrate options from the prerender config
-    const hydrateOpts: d.HydrateOptions = Object.assign({}, outputTarget) as d.HydrateOptions;
+    const hydrateOpts: d.HydrateOptions = {};
     hydrateOpts.url = prerenderLocation.url;
     hydrateOpts.isPrerender = true;
 

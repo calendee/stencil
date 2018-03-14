@@ -36,7 +36,8 @@ describe('validateConfig', () => {
       buildDir: 'someotherdir',
       indexHtml: 'some.html',
       empty: false,
-      collapseWhitespace: false
+      collapseWhitespace: false,
+      baseUrl: '/docs'
     };
     config.outputTargets = [www];
     validateConfig(config);
@@ -47,6 +48,7 @@ describe('validateConfig', () => {
     expect(outputTarget.empty).toBe(false);
     expect(outputTarget.collapseWhitespace).toBe(false);
     expect(outputTarget.hydrateComponents).toBe(true);
+    expect(outputTarget.baseUrl).toBe('/docs/');
   });
 
   it('default prerender when flag true, prod mode', () => {
@@ -54,6 +56,7 @@ describe('validateConfig', () => {
     validateConfig(config);
 
     const outputTarget: d.OutputTargetWww = config.outputTargets.find(o => o.type === 'www');
+    expect(outputTarget.baseUrl).toBe('/');
     expect(outputTarget.canonicalLink).toBe(true);
     expect(outputTarget.collapseWhitespace).toBe(true);
     expect(outputTarget.hydrateComponents).toBe(true);
@@ -72,6 +75,7 @@ describe('validateConfig', () => {
     validateConfig(config);
 
     const outputTarget: d.OutputTargetWww = config.outputTargets.find(o => o.type === 'www');
+    expect(outputTarget.baseUrl).toBe('/');
     expect(outputTarget.canonicalLink).toBe(false);
     expect(outputTarget.collapseWhitespace).toBe(true);
     expect(outputTarget.hydrateComponents).toBe(false);
@@ -91,6 +95,7 @@ describe('validateConfig', () => {
     validateConfig(config);
 
     const outputTarget: d.OutputTargetWww = config.outputTargets.find(o => o.type === 'www');
+    expect(outputTarget.baseUrl).toBe('/');
     expect(outputTarget.canonicalLink).toBe(false);
     expect(outputTarget.collapseWhitespace).toBe(false);
     expect(outputTarget.hydrateComponents).toBe(false);

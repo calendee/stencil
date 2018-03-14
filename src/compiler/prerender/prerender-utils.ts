@@ -44,7 +44,19 @@ export function normalizePrerenderLocation(config: d.Config, outputTarget: d.Out
     prerenderLocation.url = config.sys.url.format(normalizedUrl);
     prerenderLocation.path = config.sys.url.parse(prerenderLocation.url).path;
 
-    if (hrefParseUrl.hash && outputTarget.prerenderPathQuery) {
+    if (!prerenderLocation.path.startsWith(outputTarget.baseUrl)) {
+      if (prerenderLocation.path !== outputTarget.baseUrl.substr(0, outputTarget.baseUrl.length - 1)) {
+        return null;
+      }
+    }
+
+    const filter = (typeof outputTarget.prerenderFilter === 'function') ? outputTarget.prerenderFilter : prerenderFilter;
+    const isValidUrl = filter(hrefParseUrl);
+    if (!isValidUrl) {
+      return null;
+    }
+
+    if (hrefParseUrl.hash && outputTarget.prerenderPathHash) {
       prerenderLocation.url += hrefParseUrl.hash;
       prerenderLocation.path += hrefParseUrl.hash;
     }
@@ -58,9 +70,16 @@ export function normalizePrerenderLocation(config: d.Config, outputTarget: d.Out
 }
 
 
-export function crawlAnchorsForNextUrls(config: d.Config, outputTarget: d.OutputTargetWww, prerenderQueue: d.PrerenderLocation[], results: d.HydrateResults) {
-  results.anchors && results.anchors.forEach(anchor => {
-    addLocationToProcess(config, outputTarget, results.url, prerenderQueue, anchor.href);
+function prerenderFilter(url: d.Url) {
+  const parts = url.pathname.split('/');
+  const basename = parts[parts.length - 1];
+  return !basename.includes('.');
+}
+
+
+export function crawlAnchorsForNextUrls(config: d.Config, outputTarget: d.OutputTargetWww, prerenderQueue: d.PrerenderLocation[], windowLocationHref: string, anchors: d.HydrateAnchor[]) {
+  anchors && anchors.forEach(anchor => {
+    addLocationToProcess(config, outputTarget, windowLocationHref, prerenderQueue, anchor.href);
   });
 }
 

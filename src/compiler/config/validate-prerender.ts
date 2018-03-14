@@ -1,5 +1,6 @@
 import * as d from '../../declarations';
-import { setArrayConfig, setBooleanConfig, setNumberConfig } from './config-utils';
+import { setArrayConfig, setBooleanConfig, setNumberConfig, setStringConfig } from './config-utils';
+import { normalizePath } from '../util';
 
 
 export function validatePrerender(config: d.Config, outputTarget: d.OutputTargetWww) {
@@ -24,6 +25,16 @@ export function validatePrerender(config: d.Config, outputTarget: d.OutputTarget
     }
   }
 
+  setStringConfig(outputTarget, 'baseUrl', defaults.baseUrl);
+
+  defaults.baseUrl = normalizePath(defaults.baseUrl);
+  if (!outputTarget.baseUrl.startsWith('/')) {
+    throw new Error(`baseUrl "${outputTarget.baseUrl}" must start with a slash "/". This represents an absolute path to the root of the domain.`);
+  }
+  if (!outputTarget.baseUrl.endsWith('/')) {
+    outputTarget.baseUrl += '/';
+  }
+
   setBooleanConfig(outputTarget, 'canonicalLink', null, defaults.canonicalLink);
   setBooleanConfig(outputTarget, 'collapseWhitespace', null, defaults.collapseWhitespace);
   setBooleanConfig(outputTarget, 'hydrateComponents', null, defaults.hydrateComponents);
@@ -44,6 +55,7 @@ export function validatePrerender(config: d.Config, outputTarget: d.OutputTarget
 
 
 const FULL_PRERENDER_DEFAULTS: d.OutputTargetWww = {
+  baseUrl: '/',
   canonicalLink: true,
   collapseWhitespace: true,
   hydrateComponents: true,
@@ -62,6 +74,7 @@ const FULL_PRERENDER_DEFAULTS: d.OutputTargetWww = {
 
 
 const PROD_NON_HYDRATE_DEFAULTS: d.OutputTargetWww = {
+  baseUrl: '/',
   canonicalLink: false,
   collapseWhitespace: true,
   hydrateComponents: false,
@@ -78,6 +91,7 @@ const PROD_NON_HYDRATE_DEFAULTS: d.OutputTargetWww = {
 
 
 const DEV_MODE_DEFAULTS: d.OutputTargetWww = {
+  baseUrl: '/',
   canonicalLink: false,
   collapseWhitespace: false,
   hydrateComponents: false,

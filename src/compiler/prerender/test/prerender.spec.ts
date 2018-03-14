@@ -3,7 +3,7 @@ import { expectFilesWritten } from '../../../testing/utils';
 import { TestingCompiler, TestingConfig } from '../../../testing/index';
 
 
-describe('build www', () => {
+describe('prerender', () => {
 
   let c: TestingCompiler;
   let config: d.Config;

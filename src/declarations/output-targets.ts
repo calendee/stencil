@@ -9,6 +9,7 @@ export interface OutputTargetWww extends OutputTarget {
   resourcePath?: string;
   serviceWorker?: d.ServiceWorkerConfig;
 
+  baseUrl?: string;
   canonicalLink?: boolean;
   collapseWhitespace?: boolean;
   hydrateComponents?: boolean;
@@ -17,6 +18,7 @@ export interface OutputTargetWww extends OutputTarget {
   inlineAssetsMaxSize?: number;
   prerenderUrlCrawl?: boolean;
   prerenderLocations?: d.PrerenderLocation[];
+  prerenderFilter?: (url: d.Url) => boolean;
   prerenderPathHash?: boolean;
   prerenderPathQuery?: boolean;
   prerenderMaxConcurrent?: number;
