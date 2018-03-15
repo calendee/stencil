@@ -111,17 +111,22 @@ export async function optimizeIndexHtml(
   try {
     hydrateTarget.html = await compilerCtx.fs.readFile(hydrateTarget.indexHtml);
 
-    const dom = config.sys.createDom();
-    const win = dom.parse(hydrateTarget);
-    const doc = win.document;
-    const styles: string[] = [];
+    try {
+      const dom = config.sys.createDom();
+      const win = dom.parse(hydrateTarget);
+      const doc = win.document;
+      const styles: string[] = [];
 
-    await optimizeHtml(config, compilerCtx, hydrateTarget, windowLocationPath, doc, styles, diagnostics);
+      await optimizeHtml(config, compilerCtx, hydrateTarget, windowLocationPath, doc, styles, diagnostics);
 
-    // serialize this dom back into a string
-    await compilerCtx.fs.writeFile(hydrateTarget.indexHtml, dom.serialize());
+      // serialize this dom back into a string
+      await compilerCtx.fs.writeFile(hydrateTarget.indexHtml, dom.serialize());
+
+    } catch (e) {
+      catchError(diagnostics, e);
+    }
 
   } catch (e) {
-    catchError(diagnostics, e);
+    // index.html file doesn't exist, which is fine
   }
 }

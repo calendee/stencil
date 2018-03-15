@@ -21,7 +21,7 @@ export async function prerenderOutputTargets(config: d.Config, compilerCtx: d.Co
       await prerenderOutputTarget(config, compilerCtx, buildCtx, outputTarget, entryModules);
 
     } else {
-      const windowLocationPath = '/';
+      const windowLocationPath = outputTarget.baseUrl;
       await optimizeIndexHtml(config, compilerCtx, outputTarget, windowLocationPath, buildCtx.diagnostics);
     }
 
