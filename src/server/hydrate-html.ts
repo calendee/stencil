@@ -6,7 +6,7 @@ import { optimizeHtml } from '../compiler/html/optimize-html';
 import { SSR_VNODE_ID } from '../util/constants';
 
 
-export function hydrateHtml(config: d.Config, compilerCtx: d.CompilerCtx, outputTarget: d.OutputTargetWww, cmpRegistry: d.ComponentRegistry, opts: d.HydrateOptions) {
+export function hydrateHtml(config: d.Config, compilerCtx: d.CompilerCtx, outputTarget: d.OutputTargetHydrate, cmpRegistry: d.ComponentRegistry, opts: d.HydrateOptions) {
   return new Promise<d.HydrateResults>(resolve => {
 
     // validate the hydrate options and add any missing info
@@ -57,10 +57,10 @@ export function hydrateHtml(config: d.Config, compilerCtx: d.CompilerCtx, output
       if (rootElm) {
         try {
           // optimize this document!!
-          await optimizeHtml(config, compilerCtx, hydrateTarget, doc, styles, hydrateResults);
+          await optimizeHtml(config, compilerCtx, hydrateTarget, hydrateResults.url, doc, styles, hydrateResults.diagnostics);
 
           // gather up all of the <a> tag information in the doc
-          if (hydrateTarget.collectAnchors !== false && hydrateTarget.hydrateComponents !== false) {
+          if (hydrateTarget.collectAnchors && hydrateTarget.hydrateComponents) {
             collectAnchors(config, doc, hydrateResults);
           }
 

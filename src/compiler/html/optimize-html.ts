@@ -9,19 +9,27 @@ import { minifyInlineScripts } from './minify-inline-scripts';
 import { minifyInlineStyles } from '../style/minify-inline-styles';
 
 
-export async function optimizeHtml(config: d.Config, compilerCtx: d.CompilerCtx, outputTarget: d.OutputTargetHydrate, doc: Document, styles: string[], results: d.HydrateResults) {
+export async function optimizeHtml(
+  config: d.Config,
+  compilerCtx: d.CompilerCtx,
+  hydrateTarget: d.OutputTargetHydrate,
+  windowLocationPath: string,
+  doc: Document,
+  styles: string[],
+  diagnostics: d.Diagnostic[]
+) {
   const promises: Promise<any>[] = [];
 
-  if (outputTarget.hydrateComponents !== false) {
+  if (hydrateTarget.hydrateComponents) {
     doc.documentElement.setAttribute('data-ssr', '');
   }
 
-  if (outputTarget.canonicalLink !== false) {
+  if (hydrateTarget.canonicalLink) {
     try {
-      insertCanonicalLink(config, doc, results);
+      insertCanonicalLink(config, doc, windowLocationPath);
 
     } catch (e) {
-      results.diagnostics.push({
+      diagnostics.push({
         level: 'error',
         type: 'hydrate',
         header: 'Insert Canonical Link',
@@ -30,12 +38,12 @@ export async function optimizeHtml(config: d.Config, compilerCtx: d.CompilerCtx,
     }
   }
 
-  if (outputTarget.inlineStyles) {
+  if (hydrateTarget.inlineStyles) {
     try {
-      inlineComponentStyles(config, outputTarget, doc, styles, results.diagnostics);
+      inlineComponentStyles(config, hydrateTarget, doc, styles, diagnostics);
 
     } catch (e) {
-      results.diagnostics.push({
+      diagnostics.push({
         level: 'error',
         type: 'hydrate',
         header: 'Inline Component Styles',
@@ -44,24 +52,24 @@ export async function optimizeHtml(config: d.Config, compilerCtx: d.CompilerCtx,
     }
   }
 
-  if (outputTarget.inlineLoaderScript) {
+  if (hydrateTarget.inlineLoaderScript) {
     // remove the script to the external loader script request
     // inline the loader script at the bottom of the html
-    promises.push(inlineLoaderScript(config, compilerCtx, outputTarget, doc, results));
+    promises.push(inlineLoaderScript(config, compilerCtx, hydrateTarget, windowLocationPath, doc));
   }
 
-  if (outputTarget.inlineAssetsMaxSize > 0) {
-    promises.push(inlineExternalAssets(config, compilerCtx, outputTarget, results, doc));
+  if (hydrateTarget.inlineAssetsMaxSize > 0) {
+    promises.push(inlineExternalAssets(config, compilerCtx, hydrateTarget, windowLocationPath, doc));
   }
 
-  if (outputTarget.collapseWhitespace && !config.devMode && config.logLevel !== 'debug') {
+  if (hydrateTarget.collapseWhitespace && !config.devMode && config.logLevel !== 'debug') {
     // collapseWhitespace is the default
     try {
-      config.logger.debug(`optimize ${results.pathname}, collapse html whitespace`);
+      config.logger.debug(`optimize ${windowLocationPath}, collapse html whitespace`);
       collapseHtmlWhitepace(doc.documentElement);
 
     } catch (e) {
-      results.diagnostics.push({
+      diagnostics.push({
         level: 'error',
         type: 'hydrate',
         header: 'Reduce HTML Whitespace',
@@ -77,16 +85,33 @@ export async function optimizeHtml(config: d.Config, compilerCtx: d.CompilerCtx,
   promises.length = 0;
 
   if (config.minifyCss) {
-    promises.push(minifyInlineStyles(config, compilerCtx, doc, results));
+    promises.push(minifyInlineStyles(config, compilerCtx, doc, diagnostics));
   }
 
   if (config.minifyJs) {
-    promises.push(minifyInlineScripts(config, compilerCtx, doc, results));
+    promises.push(minifyInlineScripts(config, compilerCtx, doc, diagnostics));
   }
 
   if (config.assetVersioning) {
-    promises.push(assetVersioning(config, compilerCtx, outputTarget, results.url, doc));
+    promises.push(assetVersioning(config, compilerCtx, hydrateTarget, windowLocationPath, doc));
   }
 
   await Promise.all(promises);
+}
+
+
+export async function optimizeIndexHtml(
+  config: d.Config,
+  compilerCtx: d.CompilerCtx,
+  hydrateTarget: d.OutputTargetHydrate,
+  windowLocationPath: string,
+  diagnostics: d.Diagnostic[]
+) {
+  console.log('hydrateTarget23', hydrateTarget)
+  const dom = config.sys.createDom();
+  const win = dom.parse(hydrateTarget);
+  const doc = win.document;
+  const styles: string[] = [];
+
+  await optimizeHtml(config, compilerCtx, hydrateTarget, windowLocationPath, doc, styles, diagnostics);
 }

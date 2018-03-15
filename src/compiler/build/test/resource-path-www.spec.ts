@@ -154,7 +154,7 @@ describe('www loader/core resourcePath', () => {
   });
 
 
-  it('custom resourcePath config w/ inlined loader script', async () => {
+  fit('custom resourcePath config w/ inlined loader script', async () => {
     config = new TestingConfig();
     config.flags.prerender = true;
     config.devMode = false;
@@ -174,8 +174,11 @@ describe('www loader/core resourcePath', () => {
     ];
 
     c = new TestingCompiler(config);
+
     const wwwOutput: d.OutputTargetWww = config.outputTargets.find(o => o.type === 'www');
     expect(wwwOutput.resourcePath).toEqual('/some/resource/config/path/');
+
+    console.log('wwwOutput.indexHtml1', wwwOutput.indexHtml)
 
     await setupFs(c, '<script src="build/app.js" test-inlined></script>');
 
@@ -186,18 +189,19 @@ describe('www loader/core resourcePath', () => {
 
     const loaderContent = doc.head.querySelector('script[test-inlined]').innerHTML;
     execScript(win, doc, loaderContent);
+    console.log('doc.head.outerHTML',doc.head.outerHTML)
 
     const coreScriptElm = doc.head.querySelector('script[data-resource-path][data-namespace="app"]');
-    const resourcePath = coreScriptElm.getAttribute('data-resource-path');
-    const coreScriptSrc = coreScriptElm.getAttribute('src');
+    // const resourcePath = coreScriptElm.getAttribute('data-resource-path');
+    // const coreScriptSrc = coreScriptElm.getAttribute('src');
 
-    expect(resourcePath).toBe('/some/resource/config/path/');
-    expect(coreScriptSrc).toBe('/some/resource/config/path/app.core.js');
+    // expect(resourcePath).toBe('/some/resource/config/path/');
+    // expect(coreScriptSrc).toBe('/some/resource/config/path/app.core.js');
 
-    const coreContent = await c.fs.readFile('/User/testing/www/build/app/app.core.js');
-    execScript(win, doc, coreContent);
+    // const coreContent = await c.fs.readFile('/User/testing/www/build/app/app.core.js');
+    // execScript(win, doc, coreContent);
 
-    expect(win.customElements.get('cmp-a')).toBeDefined();
+    // expect(win.customElements.get('cmp-a')).toBeDefined();
   });
 
 
@@ -228,23 +232,23 @@ describe('www loader/core resourcePath', () => {
     expect(r.diagnostics).toEqual([]);
 
     const { win, doc } = mockDom(wwwOutput.indexHtml);
-    // console.log(doc.body.outerHTML)
 
-    // const loaderContent = doc.body.querySelector('script[test-inlined]').innerHTML;
-    // execScript(win, doc, loaderContent);
+    const loaderContent = doc.body.querySelector('script[test-inlined]').innerHTML;
+    execScript(win, doc, loaderContent);
 
-    // const coreScriptElm = doc.head.querySelector('script[data-resource-path][data-namespace="app"]');
-    // const resourcePath = coreScriptElm.getAttribute('data-resource-path');
-    // const coreScriptSrc = coreScriptElm.getAttribute('src');
+    const coreScriptElm = doc.head.querySelector('script[data-resource-path][data-namespace="app"]');
+    const resourcePath = coreScriptElm.getAttribute('data-resource-path');
+    const coreScriptSrc = coreScriptElm.getAttribute('src');
 
-    // expect(resourcePath).toBe('/some/resource/attr/path/');
-    // expect(coreScriptSrc).toBe('/some/resource/attr/path/app.core.js');
+    expect(resourcePath).toBe('/some/resource/attr/path/');
+    expect(coreScriptSrc).toBe('/some/resource/attr/path/app.core.js');
 
-    // const coreContent = await c.fs.readFile('/User/testing/www/build/app/app.core.js');
-    // execScript(win, doc, coreContent);
+    const coreContent = await c.fs.readFile('/User/testing/www/build/app/app.core.js');
+    execScript(win, doc, coreContent);
 
-    // expect(win.customElements.get('cmp-a')).toBeDefined();
+    expect(win.customElements.get('cmp-a')).toBeDefined();
   });
+
 
   function mockDom(htmlFilePath: string): { win: Window, doc: HTMLDocument } {
     const jsdom = require('jsdom');

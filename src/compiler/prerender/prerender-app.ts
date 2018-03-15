@@ -2,16 +2,25 @@ import * as d from '../../declarations';
 import { buildWarn, catchError, hasError, pathJoin } from '../util';
 import { crawlAnchorsForNextUrls, getPrerenderQueue } from './prerender-utils';
 import { generateHostConfig } from './host-config';
+import { optimizeIndexHtml } from '../html/optimize-html';
 import { prerenderPath } from './prerender-path';
 
 
 export async function prerenderOutputTargets(config: d.Config, compilerCtx: d.CompilerCtx, buildCtx: d.BuildCtx, entryModules: d.EntryModule[]) {
   const outputTargets = (config.outputTargets as d.OutputTargetWww[]).filter(o => {
-    return o.type === 'www' && o.indexHtml && o.prerenderLocations && o.prerenderLocations.length > 0;
+    return o.type === 'www' && o.indexHtml;
   });
 
-  return Promise.all(outputTargets.map(outputTarget => {
-    return prerenderOutputTarget(config, compilerCtx, buildCtx, outputTarget, entryModules);
+  await Promise.all(outputTargets.map(async outputTarget => {
+
+    if (outputTarget.hydrateComponents && outputTarget.prerenderLocations && outputTarget.prerenderLocations.length > 0) {
+      await prerenderOutputTarget(config, compilerCtx, buildCtx, outputTarget, entryModules);
+
+    } else {
+      const windowLocationPath = '/';
+      await optimizeIndexHtml(config, compilerCtx, outputTarget, windowLocationPath, buildCtx.diagnostics);
+    }
+
   }));
 }
 
@@ -119,7 +128,7 @@ async function runNextPrerenderUrl(config: d.Config, compilerCtx: d.CompilerCtx,
     config.logger.printDiagnostics(results.diagnostics);
 
     if (outputTarget.prerenderUrlCrawl) {
-      crawlAnchorsForNextUrls(config, outputTarget, prerenderQueue, results);
+      crawlAnchorsForNextUrls(config, outputTarget, prerenderQueue, results.url, results.anchors);
     }
 
     hydrateResults.push(results);
