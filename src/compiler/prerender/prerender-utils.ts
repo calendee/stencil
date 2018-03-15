@@ -1,4 +1,5 @@
 import * as d from '../../declarations';
+import { pathJoin } from '../util';
 
 
 export function normalizePrerenderLocation(config: d.Config, outputTarget: d.OutputTargetWww, windowLocationHref: string, href: string) {
@@ -113,4 +114,23 @@ export function getPrerenderQueue(config: d.Config, outputTarget: d.OutputTarget
   }
 
   return prerenderQueue;
+}
+
+
+export function getWritePathFromUrl(config: d.Config, outputTarget: d.OutputTargetWww, url: string) {
+  const parsedUrl = config.sys.url.parse(url);
+
+  let pathName = parsedUrl.pathname;
+  if (pathName.startsWith(outputTarget.baseUrl)) {
+    pathName = pathName.substring(outputTarget.baseUrl.length);
+  }
+
+  // figure out the directory where this file will be saved
+  const dir = config.sys.path.join(
+    outputTarget.dir,
+    pathName
+  );
+
+  // create the full path where this will be saved (normalize for windowz)
+  return pathJoin(config, dir, `index.html`);
 }

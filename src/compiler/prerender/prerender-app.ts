@@ -1,6 +1,6 @@
 import * as d from '../../declarations';
-import { buildWarn, catchError, hasError, pathJoin } from '../util';
-import { crawlAnchorsForNextUrls, getPrerenderQueue } from './prerender-utils';
+import { buildWarn, catchError, hasError } from '../util';
+import { crawlAnchorsForNextUrls, getPrerenderQueue, getWritePathFromUrl } from './prerender-utils';
 import { generateHostConfig } from './host-config';
 import { optimizeIndexHtml } from '../html/optimize-html';
 import { prerenderPath } from './prerender-path';
@@ -153,19 +153,11 @@ async function runNextPrerenderUrl(config: d.Config, compilerCtx: d.CompilerCtx,
 }
 
 
-async function writePrerenderDest(config: d.Config, ctx: d.CompilerCtx, outputTarget: d.OutputTargetWww, results: d.HydrateResults) {
-  const parsedUrl = config.sys.url.parse(results.url);
-
-  // figure out the directory where this file will be saved
-  const dir = config.sys.path.join(
-    outputTarget.dir,
-    parsedUrl.pathname
-  );
-
-  // create the full path where this will be saved (normalize for windowz)
-  const filePath = pathJoin(config, dir, `index.html`);
+async function writePrerenderDest(config: d.Config, compilerCtx: d.CompilerCtx, outputTarget: d.OutputTargetWww, results: d.HydrateResults) {
+  // create the full path where this will be saved
+  const filePath = getWritePathFromUrl(config, outputTarget, results.url);
 
   // add the prerender html content it to our collection of
   // files that need to be saved when we're all ready
-  await ctx.fs.writeFile(filePath, results.html);
+  await compilerCtx.fs.writeFile(filePath, results.html);
 }

@@ -6,7 +6,7 @@ import { normalizePath } from '../util';
 export function validatePrerender(config: d.Config, outputTarget: d.OutputTargetWww) {
   let defaults: d.OutputTargetWww;
 
-  if (config.flags && config.flags.prerender) {
+  if (config.flags.prerender) {
     // forcing a prerender build
     defaults = FULL_PRERENDER_DEFAULTS;
 
@@ -26,15 +26,6 @@ export function validatePrerender(config: d.Config, outputTarget: d.OutputTarget
   }
 
   setStringConfig(outputTarget, 'baseUrl', defaults.baseUrl);
-
-  defaults.baseUrl = normalizePath(defaults.baseUrl);
-  if (!outputTarget.baseUrl.startsWith('/')) {
-    throw new Error(`baseUrl "${outputTarget.baseUrl}" must start with a slash "/". This represents an absolute path to the root of the domain.`);
-  }
-  if (!outputTarget.baseUrl.endsWith('/')) {
-    outputTarget.baseUrl += '/';
-  }
-
   setBooleanConfig(outputTarget, 'canonicalLink', null, defaults.canonicalLink);
   setBooleanConfig(outputTarget, 'collapseWhitespace', null, defaults.collapseWhitespace);
   setBooleanConfig(outputTarget, 'hydrateComponents', null, defaults.hydrateComponents);
@@ -47,6 +38,20 @@ export function validatePrerender(config: d.Config, outputTarget: d.OutputTarget
   setBooleanConfig(outputTarget, 'prerenderPathQuery', null, defaults.prerenderPathQuery);
   setNumberConfig(outputTarget, 'prerenderMaxConcurrent', null, defaults.prerenderMaxConcurrent);
   setBooleanConfig(outputTarget, 'removeUnusedStyles', null, defaults.removeUnusedStyles);
+
+  defaults.baseUrl = normalizePath(defaults.baseUrl);
+  if (!outputTarget.baseUrl.startsWith('/')) {
+    throw new Error(`baseUrl "${outputTarget.baseUrl}" must start with a slash "/". This represents an absolute path to the root of the domain.`);
+  }
+  if (!outputTarget.baseUrl.endsWith('/')) {
+    outputTarget.baseUrl += '/';
+  }
+
+  if (config.flags.prerender && outputTarget.prerenderLocations.length === 0) {
+    outputTarget.prerenderLocations.push({
+      path: outputTarget.baseUrl
+    });
+  }
 
   if (outputTarget.hydrateComponents) {
     config.buildEs5 = true;
@@ -63,9 +68,6 @@ const FULL_PRERENDER_DEFAULTS: d.OutputTargetWww = {
   inlineLoaderScript: true,
   inlineAssetsMaxSize: 5000,
   prerenderUrlCrawl: true,
-  prerenderLocations: [
-    { path: '/' }
-  ],
   prerenderPathHash: false,
   prerenderPathQuery: false,
   prerenderMaxConcurrent: 4,
@@ -82,7 +84,6 @@ const PROD_NON_HYDRATE_DEFAULTS: d.OutputTargetWww = {
   inlineLoaderScript: true,
   inlineAssetsMaxSize: 0,
   prerenderUrlCrawl: false,
-  prerenderLocations: [],
   prerenderPathHash: false,
   prerenderPathQuery: false,
   prerenderMaxConcurrent: 0,
@@ -99,7 +100,6 @@ const DEV_MODE_DEFAULTS: d.OutputTargetWww = {
   inlineLoaderScript: false,
   inlineAssetsMaxSize: 0,
   prerenderUrlCrawl: false,
-  prerenderLocations: [],
   prerenderPathHash: false,
   prerenderPathQuery: false,
   prerenderMaxConcurrent: 0,

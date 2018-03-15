@@ -48,7 +48,6 @@ export interface OutputTargetHydrate extends OutputTargetWww, d.HydrateOptions {
   isPrerender?: boolean;
   serializeHtml?: boolean;
   destroyDom?: boolean;
-  collectAnchors?: boolean;
 }
 
 

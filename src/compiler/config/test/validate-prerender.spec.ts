@@ -49,6 +49,7 @@ describe('validateConfig', () => {
     expect(outputTarget.collapseWhitespace).toBe(false);
     expect(outputTarget.hydrateComponents).toBe(true);
     expect(outputTarget.baseUrl).toBe('/docs/');
+    expect(outputTarget.prerenderLocations).toEqual([{ path: '/docs/' }]);
   });
 
   it('default prerender when flag true, prod mode', () => {

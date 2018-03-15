@@ -11,7 +11,8 @@ describe('validateOutputTargetWww', () => {
       sys: {
         path: path
       },
-      rootDir: '/'
+      rootDir: '/',
+      flags: {}
     };
   });
 

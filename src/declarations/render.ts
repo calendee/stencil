@@ -74,7 +74,6 @@ export interface HydrateOptions extends RenderOptions {
   isPrerender?: boolean;
   serializeHtml?: boolean;
   destroyDom?: boolean;
-  collectAnchors?: boolean;
   console?: {
     [level: string]: (...msgs: string[]) => void;
   };

@@ -60,7 +60,7 @@ export function hydrateHtml(config: d.Config, compilerCtx: d.CompilerCtx, output
           await optimizeHtml(config, compilerCtx, hydrateTarget, hydrateResults.url, doc, styles, hydrateResults.diagnostics);
 
           // gather up all of the <a> tag information in the doc
-          if (hydrateTarget.collectAnchors && hydrateTarget.hydrateComponents) {
+          if (hydrateTarget.isPrerender && hydrateTarget.hydrateComponents) {
             collectAnchors(config, doc, hydrateResults);
           }
 

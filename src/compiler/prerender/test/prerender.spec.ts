@@ -9,13 +9,14 @@ describe('prerender', () => {
   let config: d.Config;
   let outputTarget: d.OutputTargetWww;
 
-  it('should prerender www dir w/ sub directory', async () => {
+  fit('should prerender www dir w/ sub directory', async () => {
     config = new TestingConfig();
     config.buildAppCore = true;
     config.flags.prerender = true;
     outputTarget = {
       type: 'www',
       dir: 'www/docs',
+      baseUrl: '/docs'
     };
     config.outputTargets = [outputTarget];
 
