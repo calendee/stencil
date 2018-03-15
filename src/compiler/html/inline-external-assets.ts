@@ -51,6 +51,10 @@ async function inlineScript(config: d.Config, compilerCtx: d.CompilerCtx, output
 
 
 async function getAssetContent(config: d.Config, ctx: d.CompilerCtx, outputTarget: d.OutputTargetHydrate, windowLocationPath: string, assetUrl: string) {
+  if (typeof assetUrl !== 'string' || assetUrl.trim() === '') {
+    return null;
+  }
+
   // figure out the url's so we can check the hostnames
   const fromUrl = config.sys.url.parse(windowLocationPath);
   const toUrl = config.sys.url.parse(assetUrl);

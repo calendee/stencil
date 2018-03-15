@@ -28,10 +28,15 @@ export async function generateIndexHtml(config: d.Config, compilerCtx: d.Compile
 
   // get the source index html content
   try {
-    const indexSrcHtml = await compilerCtx.fs.readFile(config.srcIndexHtml);
+    let indexSrcHtml = await compilerCtx.fs.readFile(config.srcIndexHtml);
 
     try {
-      await indexHtmlServiceWorkerUpdate(config, compilerCtx, outputTarget, indexSrcHtml);
+      indexSrcHtml = await updateIndexHtmlServiceWorker(config, outputTarget, indexSrcHtml);
+
+      // add the prerendered html to our list of files to write
+      await compilerCtx.fs.writeFile(outputTarget.indexHtml, indexSrcHtml);
+
+      config.logger.debug(`optimizeHtml, write: ${outputTarget.indexHtml}`);
 
     } catch (e) {
       catchError(buildCtx.diagnostics, e);
@@ -41,14 +46,4 @@ export async function generateIndexHtml(config: d.Config, compilerCtx: d.Compile
     // it's ok if there's no index file
     config.logger.debug(`no index html: ${config.srcIndexHtml}: ${e}`);
   }
-}
-
-
-export async function indexHtmlServiceWorkerUpdate(config: d.Config, compilerCtx: d.CompilerCtx, outputTarget: d.OutputTargetWww, indexHtml: string) {
-  indexHtml = await updateIndexHtmlServiceWorker(config, outputTarget, indexHtml);
-
-  // add the prerendered html to our list of files to write
-  await compilerCtx.fs.writeFile(outputTarget.indexHtml, indexHtml);
-
-  config.logger.debug(`optimizeHtml, write: ${outputTarget.indexHtml}`);
 }

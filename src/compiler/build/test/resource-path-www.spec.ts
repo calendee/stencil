@@ -154,7 +154,7 @@ describe('www loader/core resourcePath', () => {
   });
 
 
-  fit('custom resourcePath config w/ inlined loader script', async () => {
+  it('custom resourcePath config w/ inlined loader script, do not hydrateComponents', async () => {
     config = new TestingConfig();
     config.flags.prerender = true;
     config.devMode = false;
@@ -178,8 +178,6 @@ describe('www loader/core resourcePath', () => {
     const wwwOutput: d.OutputTargetWww = config.outputTargets.find(o => o.type === 'www');
     expect(wwwOutput.resourcePath).toEqual('/some/resource/config/path/');
 
-    console.log('wwwOutput.indexHtml1', wwwOutput.indexHtml)
-
     await setupFs(c, '<script src="build/app.js" test-inlined></script>');
 
     const r = await c.build();
@@ -189,19 +187,18 @@ describe('www loader/core resourcePath', () => {
 
     const loaderContent = doc.head.querySelector('script[test-inlined]').innerHTML;
     execScript(win, doc, loaderContent);
-    console.log('doc.head.outerHTML',doc.head.outerHTML)
 
     const coreScriptElm = doc.head.querySelector('script[data-resource-path][data-namespace="app"]');
-    // const resourcePath = coreScriptElm.getAttribute('data-resource-path');
-    // const coreScriptSrc = coreScriptElm.getAttribute('src');
+    const resourcePath = coreScriptElm.getAttribute('data-resource-path');
+    const coreScriptSrc = coreScriptElm.getAttribute('src');
 
-    // expect(resourcePath).toBe('/some/resource/config/path/');
-    // expect(coreScriptSrc).toBe('/some/resource/config/path/app.core.js');
+    expect(resourcePath).toBe('/some/resource/config/path/');
+    expect(coreScriptSrc).toBe('/some/resource/config/path/app.core.js');
 
-    // const coreContent = await c.fs.readFile('/User/testing/www/build/app/app.core.js');
-    // execScript(win, doc, coreContent);
+    const coreContent = await c.fs.readFile('/User/testing/www/build/app/app.core.js');
+    execScript(win, doc, coreContent);
 
-    // expect(win.customElements.get('cmp-a')).toBeDefined();
+    expect(win.customElements.get('cmp-a')).toBeDefined();
   });
 
 

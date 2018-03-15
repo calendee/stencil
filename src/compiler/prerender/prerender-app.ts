@@ -7,6 +7,10 @@ import { prerenderPath } from './prerender-path';
 
 
 export async function prerenderOutputTargets(config: d.Config, compilerCtx: d.CompilerCtx, buildCtx: d.BuildCtx, entryModules: d.EntryModule[]) {
+  if (!config.srcIndexHtml) {
+    return;
+  }
+
   const outputTargets = (config.outputTargets as d.OutputTargetWww[]).filter(o => {
     return o.type === 'www' && o.indexHtml;
   });

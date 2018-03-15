@@ -7,6 +7,7 @@ import { inlineLoaderScript } from './inline-loader-script';
 import { insertCanonicalLink } from './canonical-link';
 import { minifyInlineScripts } from './minify-inline-scripts';
 import { minifyInlineStyles } from '../style/minify-inline-styles';
+import { catchError } from '../util';
 
 
 export async function optimizeHtml(
@@ -107,11 +108,20 @@ export async function optimizeIndexHtml(
   windowLocationPath: string,
   diagnostics: d.Diagnostic[]
 ) {
-  console.log('hydrateTarget23', hydrateTarget)
-  const dom = config.sys.createDom();
-  const win = dom.parse(hydrateTarget);
-  const doc = win.document;
-  const styles: string[] = [];
+  try {
+    hydrateTarget.html = await compilerCtx.fs.readFile(hydrateTarget.indexHtml);
 
-  await optimizeHtml(config, compilerCtx, hydrateTarget, windowLocationPath, doc, styles, diagnostics);
+    const dom = config.sys.createDom();
+    const win = dom.parse(hydrateTarget);
+    const doc = win.document;
+    const styles: string[] = [];
+
+    await optimizeHtml(config, compilerCtx, hydrateTarget, windowLocationPath, doc, styles, diagnostics);
+
+    // serialize this dom back into a string
+    await compilerCtx.fs.writeFile(hydrateTarget.indexHtml, dom.serialize());
+
+  } catch (e) {
+    catchError(diagnostics, e);
+  }
 }
