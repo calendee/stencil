@@ -98,11 +98,11 @@ function angularDirectiveProxy(allInputs: string[], cmpMeta: d.ComponentMeta) {
   });
 
   cmpMeta.eventsMeta.forEach(eventMeta => {
-    o.push(`@Output() ${eventMeta.eventName}: EventEmitter<any>;`);
+    o.push(`  @Output() ${eventMeta.eventName}: EventEmitter<any>;`);
   });
 
   if (inputs.length > 0) {
-    o.push(`constructor(el: ElementRef) { inputs(this, el, [${inputs.join(`, `)}]); }`);
+    o.push(`  constructor(el: ElementRef) { inputs(this, el, [${inputs.join(`, `)}]); }`);
   }
 
   o.push(`}\n`);
@@ -112,7 +112,7 @@ function angularDirectiveProxy(allInputs: string[], cmpMeta: d.ComponentMeta) {
 
 
 function getInput(memberName: string, memberMeta: d.MemberMeta) {
-  return `${getJsDocs(memberMeta)}@Input() ${memberName}: ${getPropType(memberMeta.propType)};`;
+  return `${getJsDocs(memberMeta)}  @Input() ${memberName}: ${getPropType(memberMeta.propType)};`;
 }
 
 
@@ -120,9 +120,9 @@ function getJsDocs(m: d.MemberMeta) {
   let c = '';
 
   if (m.jsdoc && m.jsdoc.documentation) {
-    c += `/**\n`;
-    c += ` * ${m.jsdoc.documentation.replace(/\r?\n|\r/g, ' ')}\n`;
-    c += ` */\n`;
+    c += `  /**\n`;
+    c += `   * ${m.jsdoc.documentation.replace(/\r?\n|\r/g, ' ')}\n`;
+    c += `   */\n`;
   }
 
   return c;
