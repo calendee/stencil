@@ -8,6 +8,7 @@ import { normalizePath } from '../util';
 import { normalizeStyles } from '../style/normalize-styles';
 import * as ts from 'typescript';
 import { AttributeTypeReference } from '../../declarations';
+import { angularProxy } from '../output-targets/angular';
 
 
 export async function generateComponentTypes(config: d.Config, compilerCtx: d.CompilerCtx, buildCtx: d.BuildCtx, tsOptions: ts.CompilerOptions, tsHost: ts.CompilerHost, tsFilePaths: string[], componentsDtsSrcFilePath: string) {
@@ -23,6 +24,11 @@ export async function generateComponentTypes(config: d.Config, compilerCtx: d.Co
 
   // Gather component metadata and type info
   const metadata = gatherMetadata(config, compilerCtx, buildCtx, checkProgram.getTypeChecker(), checkProgram.getSourceFiles());
+
+  const angularOuputTargets = config.outputTargets.filter(o => o.type === 'angular-proxy');
+  angularOuputTargets.forEach(angularOuputTarget => {
+    angularProxy(config, angularOuputTarget, metadata);
+  });
 
   Object.keys(metadata).forEach(key => {
     const tsFilePath = normalizePath(key);

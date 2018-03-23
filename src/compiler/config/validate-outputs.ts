@@ -43,4 +43,4 @@ export function validateOutputTargets(config: d.Config) {
 }
 
 
-const VALID_TYPES = ['dist', 'docs', 'stats', 'www'];
+const VALID_TYPES = ['angular-proxy', 'dist', 'docs', 'stats', 'www'];

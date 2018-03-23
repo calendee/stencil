@@ -62,6 +62,11 @@ export interface OutputTargetStats extends OutputTarget {
 }
 
 
+export interface OutputTargetAngularProxy extends OutputTarget {
+
+}
+
+
 export interface OutputTarget {
-  type?: 'dist' | 'docs' | 'stats' | 'www';
+  type?: 'angular-proxy' | 'dist' | 'docs' | 'stats' | 'www';
 }
