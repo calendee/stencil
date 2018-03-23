@@ -85,30 +85,11 @@ function angularDirectiveProxy(allInputs: string[], cmpMeta: d.ComponentMeta) {
     const m = cmpMeta.membersMeta[memberName];
 
     if (m.memberType === MEMBER_TYPE.Prop || m.memberType === MEMBER_TYPE.PropMutable) {
-      if (m.propType === PROP_TYPE.Boolean) {
-        o.push(`  @Input() ${memberName}: boolean;`);
-        inputs.push(memberName);
-        if (!allInputs.includes(memberName)) {
-          allInputs.push(memberName);
-        }
+      if (m.propType === PROP_TYPE.String || m.propType === PROP_TYPE.Number || m.propType === PROP_TYPE.Boolean || m.propType === PROP_TYPE.Any) {
+        o.push(getInput(memberName, m));
 
-      } else if (m.propType === PROP_TYPE.Number) {
-        o.push(`  @Input() ${memberName}: number;`);
         inputs.push(memberName);
-        if (!allInputs.includes(memberName)) {
-          allInputs.push(memberName);
-        }
 
-      } else if (m.propType === PROP_TYPE.String) {
-        o.push(`  @Input() ${memberName}: string;`);
-        inputs.push(memberName);
-        if (!allInputs.includes(memberName)) {
-          allInputs.push(memberName);
-        }
-
-      } else if (m.propType === PROP_TYPE.Any) {
-        o.push(`  @Input() ${memberName}: any;`);
-        inputs.push(memberName);
         if (!allInputs.includes(memberName)) {
           allInputs.push(memberName);
         }
@@ -117,14 +98,46 @@ function angularDirectiveProxy(allInputs: string[], cmpMeta: d.ComponentMeta) {
   });
 
   cmpMeta.eventsMeta.forEach(eventMeta => {
-    o.push(`  @Output() ${eventMeta.eventName}: EventEmitter<any>;`);
+    o.push(`@Output() ${eventMeta.eventName}: EventEmitter<any>;`);
   });
 
   if (inputs.length > 0) {
-    o.push(`  constructor(el: ElementRef) { inputs(this, el, [${inputs.join(`, `)}]); }`);
+    o.push(`constructor(el: ElementRef) { inputs(this, el, [${inputs.join(`, `)}]); }`);
   }
 
   o.push(`}\n`);
 
   return o.join('\n');
+}
+
+
+function getInput(memberName: string, memberMeta: d.MemberMeta) {
+  return `${getJsDocs(memberMeta)}@Input() ${memberName}: ${getPropType(memberMeta.propType)};`;
+}
+
+
+function getJsDocs(m: d.MemberMeta) {
+  let c = '';
+
+  if (m.jsdoc && m.jsdoc.documentation) {
+    c += `/**\n`;
+    c += ` * ${m.jsdoc.documentation.replace(/\r?\n|\r/g, ' ')}\n`;
+    c += ` */\n`;
+  }
+
+  return c;
+}
+
+
+function getPropType(propType: PROP_TYPE) {
+  if (propType === PROP_TYPE.String) {
+    return 'string';
+  }
+  if (propType === PROP_TYPE.Number) {
+    return 'number';
+  }
+  if (propType === PROP_TYPE.Boolean) {
+    return 'boolean';
+  }
+  return 'any';
 }
