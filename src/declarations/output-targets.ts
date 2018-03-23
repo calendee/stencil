@@ -62,11 +62,11 @@ export interface OutputTargetStats extends OutputTarget {
 }
 
 
-export interface OutputTargetAngularProxy extends OutputTarget {
-
+export interface OutputTargetAngular extends OutputTarget {
+  directivesProxyFile?: string;
 }
 
 
 export interface OutputTarget {
-  type?: 'angular-proxy' | 'dist' | 'docs' | 'stats' | 'www';
+  type?: 'angular' | 'dist' | 'docs' | 'stats' | 'www';
 }

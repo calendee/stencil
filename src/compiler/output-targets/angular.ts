@@ -2,8 +2,56 @@ import * as d from '../../declarations';
 import { MEMBER_TYPE, PROP_TYPE } from '../../util/constants';
 
 
-export function angularProxy(_config: d.Config, _outputTarget: d.OutputTargetAngularProxy, cmpRegistry: d.ComponentRegistry) {
+export function angularDirectiveProxyOutputs(config: d.Config, compilerCtx: d.CompilerCtx, cmpRegistry: d.ComponentRegistry) {
+  const angularOuputTargets = (config.outputTargets as d.OutputTargetAngular[]).filter(o => o.type === 'angular' && o.directivesProxyFile);
 
+  return Promise.all(angularOuputTargets.map(angularOuputTarget => {
+    return angularDirectiveProxyOutput(config, compilerCtx, angularOuputTarget, cmpRegistry);
+  }));
+}
+
+
+async function angularDirectiveProxyOutput(config: d.Config, compilerCtx: d.CompilerCtx, outputTarget: d.OutputTargetAngular, cmpRegistry: d.ComponentRegistry) {
+  let c = angularDirectiveProxies(cmpRegistry);
+
+  const angularImports: string[] = [];
+
+  if (c.includes('@Directive')) {
+    angularImports.push('Directive');
+  }
+
+  if (c.includes('@Input')) {
+    angularImports.push('Input');
+    c = angularProxyInput() + c;
+  }
+
+  if (c.includes('@Output')) {
+    angularImports.push('Output');
+    angularImports.push('EventEmitter');
+  }
+
+  c = `/* angular directive proxies */\nimport { ${angularImports.sort().join(', ')} } from '@angular/core';\n\n` + c;
+
+  await compilerCtx.fs.writeFile(outputTarget.directivesProxyFile, c);
+
+  config.logger.debug(`generated angular directives: ${outputTarget.directivesProxyFile}`);
+}
+
+
+function angularProxyInput() {
+  return [
+    `function inputs(instance: any, el: ElementRef, props: string[]) {`,
+    `  props.forEach(propName => {`,
+    `    Object.defineProperty(instance, propName, {`,
+    `      get: () => el.nativeElement[propName], set: (val: any) => el.nativeElement[propName] = val`,
+    `    });`,
+    `  });`,
+    `}\n`
+  ].join('\n') + '\n';
+}
+
+
+function angularDirectiveProxies(cmpRegistry: d.ComponentRegistry) {
   const metadata = Object.keys(cmpRegistry).map(key => cmpRegistry[key]);
 
   metadata.sort((a, b) => {
@@ -12,31 +60,22 @@ export function angularProxy(_config: d.Config, _outputTarget: d.OutputTargetAng
     return 0;
   });
 
+  const allInputs: string[] = [];
+
+  let c = metadata.map(cmpMeta => angularDirectiveProxy(allInputs, cmpMeta)).join('\n');
+
+  allInputs.sort();
+
+  const inputs = allInputs.map(v => `${v} = '${v}'`).join(', ');
+
+  c = `const ${inputs};\n\n${c}`;
+
+  return c;
+}
+
+
+function angularDirectiveProxy(allInputs: string[], cmpMeta: d.ComponentMeta) {
   const o: string[] = [];
-
-  angularProxyInput(o);
-
-  metadata.forEach(cmpMeta => {
-    return angularComponent(o, cmpMeta);
-  });
-
-  console.log(o.join('\n'));
-}
-
-
-function angularProxyInput(o: string[]) {
-  o.push(`function proxyInputs(instance: any, elm: any, props: string[]) {`);
-  o.push(`  props.forEach(propName => {`);
-  o.push(`    Object.defineProperty(instance, propName, {`);
-  o.push(`      get: () => elm[propName],`);
-  o.push(`      set: (val: any) => elm[propName] = val`);
-  o.push(`    });`);
-  o.push(`  });`);
-  o.push(`}\n`);
-}
-
-
-function angularComponent(o: string[], cmpMeta: d.ComponentMeta) {
   const inputs: string[] = [];
 
   o.push(`@Directive({ selector: '${cmpMeta.tagNameMeta}' })`);
@@ -47,27 +86,45 @@ function angularComponent(o: string[], cmpMeta: d.ComponentMeta) {
 
     if (m.memberType === MEMBER_TYPE.Prop || m.memberType === MEMBER_TYPE.PropMutable) {
       if (m.propType === PROP_TYPE.Boolean) {
-        o.push(`@Input() ${memberName}: boolean;`);
+        o.push(`  @Input() ${memberName}: boolean;`);
         inputs.push(memberName);
+        if (!allInputs.includes(memberName)) {
+          allInputs.push(memberName);
+        }
 
       } else if (m.propType === PROP_TYPE.Number) {
-        o.push(`@Input() ${memberName}: number;`);
+        o.push(`  @Input() ${memberName}: number;`);
         inputs.push(memberName);
+        if (!allInputs.includes(memberName)) {
+          allInputs.push(memberName);
+        }
 
       } else if (m.propType === PROP_TYPE.String) {
-        o.push(`@Input() ${memberName}: string;`);
+        o.push(`  @Input() ${memberName}: string;`);
         inputs.push(memberName);
+        if (!allInputs.includes(memberName)) {
+          allInputs.push(memberName);
+        }
 
       } else if (m.propType === PROP_TYPE.Any) {
-        o.push(`@Input() ${memberName}: any;`);
+        o.push(`  @Input() ${memberName}: any;`);
         inputs.push(memberName);
+        if (!allInputs.includes(memberName)) {
+          allInputs.push(memberName);
+        }
       }
     }
   });
 
+  cmpMeta.eventsMeta.forEach(eventMeta => {
+    o.push(`  @Output() ${eventMeta.eventName}: EventEmitter<any>;`);
+  });
+
   if (inputs.length > 0) {
-    o.push(`constructor(e: ElementRef) { proxyInputs(this, e.nativeElement, ['${inputs.join(`','`)}']); }`);
+    o.push(`  constructor(el: ElementRef) { inputs(this, el, [${inputs.join(`, `)}]); }`);
   }
 
   o.push(`}\n`);
+
+  return o.join('\n');
 }
