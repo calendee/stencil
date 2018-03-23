@@ -1,12 +1,13 @@
 import * as d from '../../../declarations';
 import { catchError } from '../../util';
 import { getAttributeTypeInfo, isDecoratorNamed, serializeSymbol } from './utils';
-import { toDashCase } from '../../../util/helpers';
+import { isReservedMember } from './reserved-public-members';
 import { MEMBER_TYPE, PROP_TYPE } from '../../../util/constants';
+import { toDashCase } from '../../../util/helpers';
 import * as ts from 'typescript';
 
 
-export function getPropDecoratorMeta(checker: ts.TypeChecker, classNode: ts.ClassDeclaration, sourceFile: ts.SourceFile, diagnostics: d.Diagnostic[]) {
+export function getPropDecoratorMeta(config: d.Config, checker: ts.TypeChecker, classNode: ts.ClassDeclaration, sourceFile: ts.SourceFile, componentClass: string, diagnostics: d.Diagnostic[]) {
   return classNode.members
     .filter(member => Array.isArray(member.decorators) && member.decorators.length > 0)
     .reduce((allMembers: d.MembersMeta, prop: ts.PropertyDeclaration) => {
@@ -33,6 +34,8 @@ export function getPropDecoratorMeta(checker: ts.TypeChecker, classNode: ts.Clas
 
       } else {
         // @Prop()
+        validatePublicPropName(config, componentClass, memberName);
+
         memberData.memberType = getMemberType(propOptions);
         memberData.attribName = getAttributeName(propOptions, memberName);
         memberData.attribType = getAttribType(sourceFile, prop, diagnostics);
@@ -44,6 +47,16 @@ export function getPropDecoratorMeta(checker: ts.TypeChecker, classNode: ts.Clas
       allMembers[memberName] = memberData;
       return allMembers;
     }, {} as d.MembersMeta);
+}
+
+
+function validatePublicPropName(config: d.Config, componentClass: string, methodName: string) {
+  if (isReservedMember(methodName)) {
+    config.logger.warn([
+      `The @Prop() name "${methodName}" used within "${componentClass}" is using a reserved public member name. `,
+      `Please rename the property so it does not conflict with existing standardized element members.`
+    ].join(''));
+  }
 }
 
 
@@ -111,7 +124,10 @@ function getAttribType(sourceFile: ts.SourceFile, prop: ts.PropertyDeclaration, 
       text: attribTypeText,
     };
   } else {
-    attribType = getAttributeTypeInfo(prop.type, sourceFile);
+    attribType = {
+      text: prop.type.getText(),
+      typeReferences: getAttributeTypeInfo(prop.type, sourceFile)
+    };
   }
 
   return attribType;
