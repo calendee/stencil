@@ -12,22 +12,22 @@ export function angularDirectiveProxyOutputs(config: d.Config, compilerCtx: d.Co
 
 
 async function angularDirectiveProxyOutput(config: d.Config, compilerCtx: d.CompilerCtx, outputTarget: d.OutputTargetAngular, cmpRegistry: d.ComponentRegistry) {
-  let c = angularDirectiveProxies(cmpRegistry);
+  let c = angularDirectiveProxies(outputTarget.excludeComponents, cmpRegistry);
 
   const angularImports: string[] = [];
 
-  if (c.includes('@Directive')) {
-    angularImports.push('Directive');
+  if (c.includes('@NgDirective')) {
+    angularImports.push('Directive as NgDirective');
   }
 
-  if (c.includes('@Input')) {
-    angularImports.push('Input');
+  if (c.includes('@NgInput')) {
+    angularImports.push('Input as NgInput', 'ElementRef');
     c = angularProxyInput() + c;
   }
 
-  if (c.includes('@Output')) {
-    angularImports.push('Output');
-    angularImports.push('EventEmitter');
+  if (c.includes('@NgOutput')) {
+    angularImports.push('Output as NgOutput');
+    angularImports.push('EventEmitter as NgEventEmitter');
   }
 
   c = `/* angular directive proxies */\nimport { ${angularImports.sort().join(', ')} } from '@angular/core';\n\n` + c;
@@ -51,14 +51,16 @@ function angularProxyInput() {
 }
 
 
-function angularDirectiveProxies(cmpRegistry: d.ComponentRegistry) {
-  const metadata = Object.keys(cmpRegistry).map(key => cmpRegistry[key]);
-
-  metadata.sort((a, b) => {
-    if (a.componentClass < b.componentClass) return -1;
-    if (a.componentClass > b.componentClass) return 1;
-    return 0;
-  });
+function angularDirectiveProxies(excludeComponents: string[], cmpRegistry: d.ComponentRegistry) {
+  const metadata = Object.keys(cmpRegistry).map(key => cmpRegistry[key])
+    .filter(c => {
+      return !excludeComponents.includes(c.tagNameMeta);
+    })
+    .sort((a, b) => {
+      if (a.componentClass < b.componentClass) return -1;
+      if (a.componentClass > b.componentClass) return 1;
+      return 0;
+    });
 
   const allInputs: string[] = [];
 
@@ -76,9 +78,9 @@ function angularDirectiveProxies(cmpRegistry: d.ComponentRegistry) {
 
 function angularDirectiveProxy(allInputs: string[], cmpMeta: d.ComponentMeta) {
   const o: string[] = [];
-  const inputs: string[] = [];
+  const inputVariables: string[] = [];
 
-  o.push(`@Directive({ selector: '${cmpMeta.tagNameMeta}' })`);
+  o.push(`@NgDirective({ selector: '${cmpMeta.tagNameMeta}' })`);
   o.push(`export class ${cmpMeta.componentClass} {`);
 
   Object.keys(cmpMeta.membersMeta).forEach(memberName => {
@@ -88,21 +90,26 @@ function angularDirectiveProxy(allInputs: string[], cmpMeta: d.ComponentMeta) {
       if (m.propType === PROP_TYPE.String || m.propType === PROP_TYPE.Number || m.propType === PROP_TYPE.Boolean || m.propType === PROP_TYPE.Any) {
         o.push(getInput(memberName, m));
 
-        inputs.push(memberName);
+        if (RESERVED_KEYWORDS.includes(memberName)) {
+          inputVariables.push(`'${memberName}'`);
 
-        if (!allInputs.includes(memberName)) {
-          allInputs.push(memberName);
+        } else {
+          if (!allInputs.includes(memberName)) {
+            allInputs.push(memberName);
+          }
+
+          inputVariables.push(memberName);
         }
       }
     }
   });
 
   cmpMeta.eventsMeta.forEach(eventMeta => {
-    o.push(`  @Output() ${eventMeta.eventName}: EventEmitter<any>;`);
+    o.push(`  @NgOutput() ${eventMeta.eventName}: NgEventEmitter<any>;`);
   });
 
-  if (inputs.length > 0) {
-    o.push(`  constructor(el: ElementRef) { inputs(this, el, [${inputs.join(`, `)}]); }`);
+  if (inputVariables.length > 0) {
+    o.push(`  constructor(el: ElementRef) { inputs(this, el, [${inputVariables.join(`, `)}]); }`);
   }
 
   o.push(`}\n`);
@@ -112,7 +119,7 @@ function angularDirectiveProxy(allInputs: string[], cmpMeta: d.ComponentMeta) {
 
 
 function getInput(memberName: string, memberMeta: d.MemberMeta) {
-  return `${getJsDocs(memberMeta)}  @Input() ${memberName}: ${getPropType(memberMeta.propType)};`;
+  return `${getJsDocs(memberMeta)}  @NgInput() ${memberName}: ${getPropType(memberMeta.propType)};`;
 }
 
 
@@ -141,3 +148,7 @@ function getPropType(propType: PROP_TYPE) {
   }
   return 'any';
 }
+
+const RESERVED_KEYWORDS = [
+  'interface'
+];

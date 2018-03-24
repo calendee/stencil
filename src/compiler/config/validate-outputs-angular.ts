@@ -11,5 +11,7 @@ export function validateOutputTargetAngularProxy(config: d.Config) {
     if (!path.isAbsolute(outputTarget.directivesProxyFile)) {
       outputTarget.directivesProxyFile = normalizePath(path.join(config.rootDir, outputTarget.directivesProxyFile));
     }
+
+    outputTarget.excludeComponents = outputTarget.excludeComponents || [];
   });
 }

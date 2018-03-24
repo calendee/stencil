@@ -64,6 +64,7 @@ export interface OutputTargetStats extends OutputTarget {
 
 export interface OutputTargetAngular extends OutputTarget {
   directivesProxyFile?: string;
+  excludeComponents?: string[];
 }
 
 
